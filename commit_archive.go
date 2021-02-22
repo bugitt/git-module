@@ -4,11 +4,6 @@
 
 package git
 
-import (
-	"path/filepath"
-	"strings"
-)
-
 // ArchiveFormat is the format of an archive.
 type ArchiveFormat string
 
@@ -20,9 +15,7 @@ const (
 
 // CreateArchive creates given format of archive to the destination.
 func (c *Commit) CreateArchive(format ArchiveFormat, dst string) error {
-	prefix := filepath.Base(strings.TrimSuffix(c.repo.path, ".git")) + "/"
 	_, err := NewCommand("archive",
-		"--prefix="+prefix,
 		"--format="+string(format),
 		"-o", dst,
 		c.ID.String(),
