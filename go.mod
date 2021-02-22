@@ -1,4 +1,4 @@
-module github.com/gogs/git-module
+module github.com/bugitt/git-module
 
 go 1.12
 
