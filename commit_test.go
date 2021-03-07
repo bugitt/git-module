@@ -626,3 +626,34 @@ func TestCommit_IsImageFileByIndex(t *testing.T) {
 		})
 	}
 }
+
+func TestCommit_ReadFileSimple(t *testing.T) {
+	c, err := testrepo.CatFileCommit("4e59b72440188e7c2578299fc28ea425fbe9aece")
+	if err != nil {
+		t.Fatal(err)
+	}
+	type args struct {
+		filename string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		{"", args{"pom.xml"}, []byte{}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := c.ReadFileSimple(tt.args.filename)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Commit.ReadFileSimple() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if len(got) <= 0 {
+				t.Errorf("Commit.ReadFileSimple() = %v, want %v", got, tt.want)
+			}
+			t.Log(got)
+		})
+	}
+}

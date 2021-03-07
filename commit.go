@@ -5,7 +5,9 @@
 package git
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -169,4 +171,28 @@ func (c *Commit) IsImageFile(subpath string) (bool, error) {
 // IsImageFileByIndex returns true if the blob of the commit is an image by index.
 func (c *Commit) IsImageFileByIndex(index string) (bool, error) {
 	return c.isImageFile(c.BlobByIndex(index))
+}
+
+func (c *Commit) ReadFileSimple(filename string) ([]byte, error) {
+	output, err := NewCommand("ls-tree").AddArgs(c.ID.String()).RunInDir(c.repo.path)
+	if err != nil {
+		return nil, errors.New("list files error")
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	var fileHash string
+	for scanner.Scan() {
+		fields := bytes.Fields(scanner.Bytes())
+		if len(fields) >= 4 && string(fields[3]) == filename {
+			fileHash = string(fields[2])
+			break
+		}
+	}
+	if len(fileHash) <= 0 {
+		return nil, errors.New("no such file")
+	}
+
+	return NewCommand("cat-file").AddArgs(
+		"blob",
+		fileHash,
+	).RunInDir(c.repo.path)
 }
