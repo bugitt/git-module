@@ -56,6 +56,9 @@ func (r *Repository) parsePrettyFormatLogToList(timeout time.Duration, logs []by
 type InitOptions struct {
 	// Indicates whether the repository should be initialized in bare format.
 	Bare bool
+	// Default branch when init a repo.
+	// Need git version >=2.28
+	DefaultBranch string
 	// The timeout duration before giving up for each shell command execution.
 	// The default timeout duration will be used when not supplied.
 	Timeout time.Duration
@@ -74,6 +77,9 @@ func Init(path string, opts ...InitOptions) error {
 	}
 
 	cmd := NewCommand("init")
+	if len(opt.DefaultBranch) > 0 {
+		cmd.AddArgs(fmt.Sprintf("--initial-branch=%s", opt.DefaultBranch))
+	}
 	if opt.Bare {
 		cmd.AddArgs("--bare")
 	}
