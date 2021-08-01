@@ -173,10 +173,10 @@ func (c *Commit) IsImageFileByIndex(index string) (bool, error) {
 	return c.isImageFile(c.BlobByIndex(index))
 }
 
-func (c *Commit) ReadFileSimple(filename string) ([]byte, error) {
+func (c *Commit) getFileHash(filename string) (string, error) {
 	output, err := NewCommand("ls-tree").AddArgs(c.ID.String()).RunInDir(c.repo.path)
 	if err != nil {
-		return nil, errors.New("list files error")
+		return "", errors.New("list files error")
 	}
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 	var fileHash string
@@ -188,11 +188,32 @@ func (c *Commit) ReadFileSimple(filename string) ([]byte, error) {
 		}
 	}
 	if len(fileHash) <= 0 {
-		return nil, errors.New("no such file")
+		return "", ErrNoSuchFile
+	}
+	return fileHash, nil
+}
+
+// ReadFileSimple 从这次commit中，读取相应文件名的文件内容
+func (c *Commit) ReadFileSimple(filename string) ([]byte, error) {
+	fileHash, err := c.getFileHash(filename)
+	if err != nil {
+		return nil, err
 	}
 
 	return NewCommand("cat-file").AddArgs(
 		"blob",
 		fileHash,
 	).RunInDir(c.repo.path)
+}
+
+// ExistsFile 检查这次commit中，是否包含对应的文件名
+func (c *Commit) ExistsFile(filename string) (bool, error) {
+	_, err := c.getFileHash(filename)
+	if err == nil {
+		return true, nil
+	} else if err == ErrNoSuchFile {
+		return false, nil
+	} else {
+		return false, err
+	}
 }
